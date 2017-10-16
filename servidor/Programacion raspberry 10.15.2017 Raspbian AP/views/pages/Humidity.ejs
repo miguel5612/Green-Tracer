@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Green Tracer</title>
+    <script src="/js/socket.io.js"></script>
+    <script>
+        var temperatura,humedad,cantidadDeSensores,grafico1;
+        /*
+        var temperatura,humedad,cantidadDeSensores;
+        var socket = io.connect("http://"+window.top.location.host);
+        socket.on('eventos', function (data) {
+            if(data.sensor != 0){
+                
+                temperatura = data.dato;
+                humedad = data.dato2;
+                cantidadDeSensores = data.cantidad;
+                var x = (new Date()).getTime(), // current time
+                y = temperatura;
+                series.addPoint([x, y], true, true);
+            }
+        });
+        */
+        
+    </script>
+    <!--
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/AdminLTE.min.css">
+    <script src="/js/jquery-3.1.1.min.js"></script>
+    <script src="/js/adminlte.min.js"></script>
+</head>
+<body>
+    <div style="background-color:#3c8dbc; text-align:center;margin-bottom:0px;" >
+        <h1 style="margin-bottom:0px;padding:1%;color:white">Datos en tiempo real humedad</h1>
+    </div>
+    <div style="background-color:#ecf0f5">
+        <p>
+            <a href="/humidity">Humedad</a> / <a href="/cms">Temperatura</a>
+        </p>
+        <label style="padding:1%">Porcentaje minimo permitido de humedad: 
+            <input value="30" type="text" class="text" id="valorMaximoParaRojo"></label>
+            <div class="col-md-8" style="float:left">
+                <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+            </div>
+            <div class="col-md-4 col-sm-3 col-xs-12 bg-white" style="float:left">
+                <div class="x_title">
+                    <h2>Estados actuales</h2>
+                    <div class="clearfix"></div>
+                </div>
+                
+                <div class="col-md-12 col-sm-12 col-xs-6">
+                    <div>
+                        <p>Temperatura</p>
+                        <div class="">
+                            <div class="progress progress_sm" style="width: 76%;">
+                                <div id="barTemperatura" class="progress-bar bg-green" role="progressbar" data-transitiongoal="90" aria-valuenow="79" style="width: 0%;" ></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Humedad</p>
+                        <div class="">
+                            <div class="progress progress_sm" style="width: 76%;">
+                                <div id="barHumedad" class="progress-bar bg-green" role="progressbar" data-transitiongoal="60" aria-valuenow="59" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 col-xs-6">
+                    <div>
+                        <p>Sensores activos</p>
+                        <div class="">
+                            <div class="progress progress_sm" style="width: 76%;">
+                                <div id="barSensores" class="progress-bar bg-green" role="progressbar" data-transitiongoal="40" aria-valuenow="39" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <table style="margin:1%">
+                        
+                        <tr>
+                            <td><span>Temperatura actual promedio : </span></td>
+                            <td><span id="datossensor1"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span>Humedad actual promedio : </span></td>
+                            <td><span id="datossensor2"></span></td>
+                        </tr>
+                        
+                        <tr>
+                            <td><span>Numero de sensores activos : </span></td>
+                            <td><span id="numero"></span></td>
+                        </tr>
+                        <tr>
+                            <td><span>Fecha del ultimo registro: </span></td>
+                            <td><span id="fecha"></span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+            </div>
+            <div class="box-body">
+                <div id="world-map" class="col-lg-5 connectedSortable ui-sortable" style="height: 250px; width: 100%;">
+                    
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>
+        $(document).ready(function () {
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+            
+            grafico1=Highcharts.chart('container', {
+                chart: {
+                    type: 'spline',
+                    animation: Highcharts.svg, // don't animate in old IE
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            
+                            console.log("http://"+window.top.location.host);
+                            var socket = io.connect("http://"+window.top.location.host);
+                            var series = this.series[0];
+                            socket.on('eventos', function (data) {
+                                if(data.sensor != 0){
+                                    temperatura = parseInt(data.dato);
+                                    humedad = data.dato2;
+                                    console.log(temperatura);
+                                    cantidadDeSensores = data.cantidad;
+                                    document.getElementById("datossensor1").innerHTML = data.dato + " " + data.unidad;
+                                    socket.emit('my other event', { my: 'data' });
+                                    document.getElementById("datossensor2").innerHTML = data.dato2 + " " + data.unidad2;
+                                    console.log(document.getElementById("valorMaximoParaRojo").value);
+                                    console.log(parseInt(temperatura));
+                                    document.getElementById("fecha").innerHTML = getDate();
+                                    document.getElementById("barTemperatura").style.width = temperatura+"%";
+                                    document.getElementById("barHumedad").style.width = humedad+"%";
+                                    document.getElementById("barSensores").style.width = cantidadDeSensores+"%";
+                                    
+                                    if((document.getElementById("valorMaximoParaRojo").value)>=parseInt(humedad)){
+                                        changeColorRed();
+                                    }else{
+                                        changeColorGreen();
+                                    }
+                                    console.log("imprimiendo humedad");
+                                    console.log(humedad);
+                                    document.getElementById("numero").innerHTML = data.cantidad;
+                                    var x = (new Date()).getTime(), // current time
+                                    y = parseInt(humedad);
+                                    series.addPoint([x, y], true, true);
+                                    
+                                }
+                            });
+                            /*
+                            // set up the updating of the chart each second
+                            var series = this.series[0];
+                            setInterval(function () {
+                                var x = (new Date()).getTime(), // current time
+                                y = Math.random();
+                                series.addPoint([x, y], true, true);
+                            }, 1000);
+                            */
+                        }
+                    }
+                },
+                title: {
+                    text: 'Promedio de humedad en tiempo real de los sensores de temperatura'
+                },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150
+                },
+                yAxis: {
+                    title: {
+                        text: 'humedad'
+                    },
+                    plotLines: [{
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    }]
+                },
+                tooltip: {
+                    formatter: function () {
+                        return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                        Highcharts.numberFormat(this.y, 2);
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                exporting: {
+                    enabled: false
+                },
+                series: [{
+                    name: 'Humedad ',
+                    data: (function () {
+                        // generate an array of random data
+                        var data = [],
+                        time = (new Date()).getTime(),
+                        i;
+                        
+                        for (i = -19; i <= 0; i += 1) {
+                            data.push({
+                                x: time + i * 1000,
+                                y: Math.random
+                            });
+                        }
+                        return data;
+                    }())
+                }]
+            });
+        });
+        function changeColorRed(){
+            grafico1.options.colors[0] = "#FF0000";
+            grafico1.update(grafico1.options);
+            
+        }
+        function changeColorGreen(){
+            
+            grafico1.options.colors[0] = "#00FF00";
+            grafico1.update(grafico1.options);
+            
+        }
+        function getDate() {
+            var d = new Date(),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+            hour  = '' + d.getHours();
+            minute  = '' + d.getMinutes();
+            second  = '' + d.getSeconds();
+            
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            
+            return "           " +[year, month, day].join('/')+"    " +[hour, minute, second].join(':');
+        }
+        
+        
+    </script>
+    <script src="/js/highcharts.js"></script>
+    <script src="/js/jquery-3.2.1.slim.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <!--
+        <script src="https://code.highcharts.com/highcharts.js"></script>
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    -->
+    </html>

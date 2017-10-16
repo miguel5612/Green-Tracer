@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Green Tracer</title>
+    <script src="/js/socket.io.js"></script>
+    <script>
+      var socket = io.connect("http://"+window.top.location.host);
+      socket.on('eventos', function (data) {
+        if(data.sensor != 0){
+            
+            document.getElementById("datossensor1").innerHTML = data.dato + " " + data.unidad;
+            socket.emit('my other event', { my: 'data' });
+            document.getElementById("datossensor2").innerHTML = data.dato2 + " " + data.unidad2;
+            document.getElementById("numero").innerHTML = data.cantidad;
+            
+        }
+      });
+    </script>
+</head>
+<body style = "background-color:darkgreen">
+    <h1 style="text-align:center">Mapa de la ciudad</h1>
+    <div style="text-align:center"><img src="/img/mapa.png" alt=""></div>
+    <table>
+        <tr>
+            <td><span>Temperatura actual promedio : </span></td>
+            <td><span id="datossensor1"></span></td>
+        </tr>
+        <tr>
+            <td><span>Humedad actual promedio : </span></td>
+            <td><span id="datossensor2"></span></td>
+        </tr>
+        
+        <tr>
+            <td><span>Numero de sensores activos : </span></td>
+            <td><span id="numero"></span></td>
+        </tr>
+    </table>
+</body>
+</html>
